@@ -309,7 +309,7 @@
 
   <script>
 
-    const API_URL = "https://ia-cit.app.n8n.cloud/webhook/perguntas";
+    const API_URL = "https://ia-cit.app.n8n.cloud/webhook-test/perguntas";
 
     let sessionId = crypto.randomUUID();
 
@@ -384,6 +384,9 @@
 
       try{
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 segundos
+
         const response = await fetch(API_URL, {
 
           method:"POST",
@@ -391,6 +394,8 @@
           headers:{
             "Content-Type":"application/json"
           },
+
+          signal: controller.signal,
 
           body: JSON.stringify({
 
@@ -402,6 +407,8 @@
           })
 
         });
+
+        clearTimeout(timeoutId);
 
         removeTyping();
 
@@ -422,7 +429,11 @@
 
         removeTyping();
 
-        botMessage("Erro de conexão ou timeout.");
+        if(error.name === "AbortError"){
+          botMessage("A resposta demorou muito. O Kiko ainda está processando, tente novamente em instantes.");
+        } else {
+          botMessage("Erro de conexão. Verifique sua internet e tente novamente.");
+        }
 
         console.error(error);
 
@@ -438,6 +449,7 @@
 
     });
 
+    // Exibe mensagem de boas-vindas ao carregar a página (sem persistência)
     botMessage("Olá! Sou o Kiko, o Agente IA da Prefeitura de Tarumã. Estou aqui para ajudar você a encontrar o que precisa de forma rápida e simples!");
     botMessage("Como posso te ajudar hoje? 😊");
 
